@@ -3,8 +3,6 @@ package com.appcraftbyk.expense.art.data.local.entity
 /** Sign of a ledger row is carried by this kind; amounts are always stored positive. */
 enum class TransactionKind { EXPENSE, INCOME }
 
-enum class PaymentMethod { CASH, UPI, CREDIT_CARD, DEBIT_CARD, NET_BANKING }
-
 /** Borrowed ("I Owe") and lent ("Owed to Me") money is never netted. */
 enum class DebtDirection { BORROWED, LENT }
 

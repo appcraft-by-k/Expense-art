@@ -60,6 +60,8 @@ This file drives **feature sessions**. Each session implements exactly one phase
 | D9 | Money representation | `Long` **paise** (minor units) everywhere; never `Double`/`Float` | 2026-11-24 |
 | D10 | Architecture | MVVM + unidirectional flow (intents → VM → repo → Room Flow) | 2026-11-24 |
 | D11 | Backup encryption | DB stays unencrypted in cloud backup (accepted under D5) | 2026-11-24 |
+| D12 | Payment methods | **User-managed `payment_methods` table** (system rows seeded, archive/reassign rules mirror categories); `transactions.paymentMethodId` FK RESTRICT | 2026-11-24 |
+| D13 | Row identity | Every syncable table has `uid TEXT UNIQUE`: deterministic for system rows, UUID for user rows. Long `id` stays the local storage key | 2026-11-24 |
 
 ---
 
@@ -141,6 +143,7 @@ com.appcraftbyk.expense.art
 ├─ ExpenseArtApplication.kt            @HiltAndroidApp
 ├─ MainActivity.kt                     @AndroidEntryPoint, edge-to-edge, theme host
 ├─ core/
+│  ├─ id/Uids.kt                        stable row uid generator (cloud merge)
 │  ├─ money/Money.kt                   value class over Long minor units + arithmetic
 │  ├─ money/IndianCurrencyFormatter.kt ₹1,25,000 grouping, unit-tested
 │  ├─ time/DateRanges.kt               month/day ranges from Clock, Today/Yesterday labels
@@ -148,7 +151,7 @@ com.appcraftbyk.expense.art
 ├─ di/  DatabaseModule.kt  DataModule.kt  RepositoryModule.kt
 ├─ data/
 │  ├─ local/AppDatabase.kt  Converters.kt  DatabaseSeeder.kt
-│  ├─ local/entity/…          (9 entities)
+│  ├─ local/entity/…          (10 entities)
 │  ├─ local/dao/…             (6 DAOs)
 │  ├─ local/projection/…      (aggregate result POJOs)
 │  ├─ prefs/PreferencesRepository.kt  UserPreferences.kt
@@ -169,9 +172,9 @@ com.appcraftbyk.expense.art
 
 ---
 
-## 6. Data model — 9 tables, schema version 1
+## 6. Data model — 10 tables, schema version 1
 
-Conventions: `amountMinor: Long` (positive; sign comes from `kind`), timestamps `epochMillis: Long`, calendar-only dates `epochDay: Long`, enums stored as `TEXT` via `Converters`, all FK columns indexed.
+Conventions: every table has `uid: String` (unique index) for cloud backup/merge — deterministic `sys-…` values for seeded rows, UUIDs for user rows; `uid` is immutable once created. `amountMinor: Long` (positive; sign comes from `kind`), timestamps `epochMillis: Long`, calendar-only dates `epochDay: Long`, enums stored as `TEXT` via `Converters`, all FK columns indexed. Local FKs use `id`; the backup layer resolves parent `uid` → local `id` on restore.
 
 ### 6.1 `categories`
 | column | type | notes |
@@ -195,11 +198,11 @@ Indexes: unique `(name, kind)`, `(kind, sortOrder)`.
 | `amountMinor` | Long | `> 0` (validated) |
 | `categoryId` | Long? | FK → `categories` **RESTRICT** |
 | `occurredAt` | Long | epoch millis |
-| `paymentMethod` | `CASH` \| `UPI` \| `CREDIT_CARD` \| `DEBIT_CARD` \| `NET_BANKING` | |
+| `paymentMethodId` | Long | FK → `payment_methods` **RESTRICT** (D12) |
 | `note` | String? | |
 | `createdAt`, `updatedAt` | Long | |
 
-Indexes (PRD §6): `(occurredAt)`, `(categoryId)`, `(kind, occurredAt)`.
+Indexes (PRD §6): `(occurredAt)`, `(categoryId)`, `(paymentMethodId)`, `(kind, occurredAt)`.
 
 ### 6.3 `monthly_budgets`
 `id` PK, `yearMonth` Int (`202611`), `limitMinor` Long, `createdAt`. **Unique** `(yearMonth)`.
@@ -267,6 +270,19 @@ Indexes `(typeId)`, `(isArchived, sortOrder)`.
 
 Index `(goalId, occurredAt)`.
 
+### 6.10 `payment_methods` — user-managed (D12)
+| column | type | notes |
+|---|---|---|
+| `id` PK | Long | system rows use fixed IDs 1–N |
+| `name` | String | "Cash", "UPI", "Credit Card", … (unique, case-insensitive enforced in repo) |
+| `iconKey` | String | fixed icon set |
+| `isSystem` | Boolean | seeded; not deletable |
+| `isArchived` | Boolean | hides from pickers, keeps history |
+| `sortOrder` | Int | |
+| `createdAt` | Long | |
+
+Index: unique `(name)`, unique `(uid)`, `(sortOrder)`.
+
 ### Deferred to v2 (documented, not created)
 `reminders`, `reminder_occurrences` — recurring bill template + per-occurrence payment rows (unique `(reminderId, dueDate)`), plus `notifyDaysBefore` and `notificationsEnabled`.
 
@@ -284,6 +300,8 @@ Index `(goalId, occurredAt)`.
 8. Savings-type rules mirror categories: seeded types are non-deletable; user types are deletable only when unused, otherwise archive or reassign pots to `Other`.
 9. Archived categories/types/goals are excluded from pickers and totals but remain valid for historical rows.
 10. All SQL that feeds a screen must aggregate in SQL (`SUM`, `GROUP BY`), never by loading full tables into memory.
+11. Payment-method rules mirror categories: seeded methods are non-deletable (archive only); user methods are deletable only when unused, otherwise reassign transactions inside one `withTransaction`. Name uniqueness is case-insensitive.
+12. `uid` is generated once at row creation and never changed. System rows keep their seeded `sys-…` uid forever; repositories must never regenerate it on edit.
 
 ---
 
@@ -293,11 +311,23 @@ Index `(goalId, occurredAt)`.
 - Expense categories: Food & Dining, Groceries, Transport, Utilities, Shopping, Health, Entertainment, Rent, Other.
 - Income categories: Salary, Freelance, Business, Investments, Other.
 - Savings types: Bank FD, Bank RD, Stocks, Mutual Fund, Cash, Gold, Other.
+- Payment methods: Cash, UPI, Credit Card, Debit Card, Net Banking.
 - No transactions, debts, pots, or budgets are seeded.
+- Seeded rows carry deterministic uids (`sys-category-…`, `sys-savings-type-…`, `sys-payment-method-…`) so a future cloud merge matches them instead of duplicating.
 
 **8.2 Policy:** `exportSchema = true`; never `fallbackToDestructiveMigration`; no main-thread queries; every schema change bumps `version` and adds an explicit `Migration` + `MigrationTestHelper` test.
 
 **8.3 Planned v1 → v2 migration:** create `reminders` + `reminder_occurrences`, add the 5th Add Entry mode, replace `RemindersPlaceholderScreen`, add WorkManager daily 09:00 check.
+
+**8.4 Cloud backup readiness (reviewed 2026-11-24):**
+- **Identity:** every table has a unique immutable `uid`; system rows use deterministic uids. Local `Long` PKs remain the storage key, so a backup snapshot restores as-is and a merge restores by matching `uid` and remapping parent FKs.
+- **Natural-key collisions:** merge must match on `uid` first. The secondary unique indexes (`categories(name,kind)`, `savings_types(name)`, `payment_methods(name)`, `monthly_budgets(yearMonth)`) can still collide when two devices independently create the "same" row; the merge policy must merge or rename instead of blindly inserting.
+- **Portable values:** money is `Long` paise, enums are `TEXT` names, timestamps are epoch millis/days — all backup-safe. No floats, no ordinals, no device-local IDs in payloads.
+- **Full-snapshot backup:** self-consistent (FKs inside the file); no tombstones needed.
+- **Merge sync (future):** still needs `updatedAt` on every table and deletion tombstones (`deletedAt` or a sync log) to resolve conflicts and propagate deletes; add as an explicit v2 schema change with a migration.
+- **Restore safety:** a backup must record schema `version`; never restore a newer schema into an older app — run migrations forward instead. Restore writes must run in one `withTransaction`.
+- **Privacy:** DB is unencrypted in Android cloud backup today (D5/D11). Any custom upload must encrypt the payload client-side before leaving the device.
+- **Pre-release note:** the 2026-11-24 schema revision (uid + payment methods) redefined v1 before any release; no migration was shipped for the earlier dev-only v1.
 
 ---
 
@@ -388,6 +418,8 @@ data class HomeUiState(
 | Expenses ledger | `TransactionDao.observeRange(kind, from, to)` ordered `occurredAt DESC`; day grouping in VM via `DateRanges` |
 | Category filter chips | `CategoryDao.observeByKind(kind, includeArchived = false)` |
 | Category manager | `CategoryDao.observeAllByKind()` + `countUsage(categoryId)` |
+| Payment method chips | `PaymentMethodDao.observeAll(includeArchived = false)` |
+| Payment method manager | `PaymentMethodDao.observeAll(includeArchived = true)` + `countUsage(paymentMethodId)` |
 | Debt list + filters | `DebtDao.observeDebtsWithContact(filter)` incl. repaid sum, overdue computed vs `AppClock.today()` |
 | Repayment sheet | `DebtDao.observeRepayments(debtId)` + outstanding |
 | Savings pots | `SavingsDao.observePotsWithBalance()` (JOIN + `SUM(CASE …)`) |
@@ -408,10 +440,10 @@ data class HomeUiState(
 **Fallback if Hilt's transform fights AGP 9:** declare `org.jetbrains.kotlin.android` explicitly; if still blocked, stop and report — do not silently switch to manual DI.
 
 ### P1 — Data layer
-- [ ] 9 entities per §6 with indices/FKs exactly as specified; `Converters` (enums ⇄ String).
-- [ ] 6 DAOs (`Transaction`, `Category`, `Budget`, `Debt`, `Savings`, `PrefsAggregate` not needed) with the queries in §12.
+- [ ] 10 entities per §6 with indices/FKs exactly as specified; `Converters` (enums ⇄ String); stable `uid` on every table.
+- [ ] 6 DAOs (`Transaction`, `Category`, `Budget`, `Debt`, `Savings`, `PaymentMethod`) with the queries in §12.
 - [ ] `AppDatabase(version = 1, exportSchema = true)`; `DatabaseSeeder`; commit `schemas/1.json`.
-- [ ] Instrumented DAO test: insert → read → aggregate; FK RESTRICT behaviour for category delete in use.
+- [ ] Instrumented DAO test: insert → read → aggregate; FK RESTRICT behaviour for category/payment-method delete in use; uid uniqueness.
 
 **Acceptance:** schema JSON committed; DAO tests pass; no main-thread access.
 **Verification:** `.\gradlew :app:connectedDebugAndroidTest` (or unit-level DAO test with in-memory DB if no device).
@@ -489,7 +521,7 @@ v1→v2 migration, template + occurrence tables, triage screen, WorkManager 09:0
 | Phase | Status | Date | Notes |
 |---|---|---|---|
 | P0 Build & DI spike | Done | 2026-11-24 | KSP + Hilt + Room on AGP 9 built-in Kotlin; required `android.disallowKotlinSourceSets=false`; validated with real DAOs injected via Hilt instead of a throwaway entity |
-| P1 Data layer | Done | 2026-11-24 | 9 entities, 5 DAOs, seeder (14 categories + 7 savings types), `schemas/…/1.json`; 7 instrumented DAO tests green |
+| P1 Data layer | Done | 2026-11-24 | Revised pre-release: 10 tables incl. `payment_methods` + `uid` on every table; 6 DAOs, seeder (14 categories + 7 types + 5 payment methods), `schemas/…/1.json`; 10 instrumented DAO tests green |
 | P2 DI + domain | Not started | — | — |
 | P3 Settings/theme/shell | Not started | — | — |
 | P4 Home | Not started | — | — |
@@ -505,3 +537,4 @@ v1→v2 migration, template + occurrence tables, triage screen, WorkManager 09:0
 _(append one line per feature session: date — phase — summary — build/test result)_
 
 2026-11-24 — P0+P1 — Room DB setup: KSP/Hilt/minSdk 26 build config, 9 entities + converters, 5 DAOs with SQL aggregates, seeder, schema v1 export, DAO tests — `assembleDebug` OK, `testDebugUnitTest` OK, `connectedDebugAndroidTest` 8/8 pass, app launches without crash.
+2026-11-24 — P1 revision (pre-release) — Added stable `uid` to all tables (deterministic system uids), replaced `PaymentMethod` enum with `payment_methods` table + FK, reviewed schema for cloud backup (§8.4), regenerated schema v1 — `assembleDebug` OK, `connectedDebugAndroidTest` 11/11 pass, app launches.

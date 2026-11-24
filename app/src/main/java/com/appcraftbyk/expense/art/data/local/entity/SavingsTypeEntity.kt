@@ -3,20 +3,23 @@ package com.appcraftbyk.expense.art.data.local.entity
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.appcraftbyk.expense.art.core.id.Uids
 
 /**
- * User-managed savings instruments. Seeded rows use fixed IDs 1..N and cannot be deleted.
- * Name uniqueness is case-insensitive and enforced in the repository.
+ * User-managed savings instruments. Seeded rows use fixed IDs 1..N and deterministic [uid]s
+ * and cannot be deleted. Name uniqueness is case-insensitive and enforced in the repository.
  */
 @Entity(
     tableName = "savings_types",
     indices = [
+        Index(value = ["uid"], unique = true),
         Index(value = ["name"], unique = true),
         Index(value = ["sortOrder"])
     ]
 )
 data class SavingsTypeEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val uid: String = Uids.new(),
     val name: String,
     val iconKey: String,
     val isSystem: Boolean,

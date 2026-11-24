@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.appcraftbyk.expense.art.core.id.Uids
 
 /**
  * Outstanding balance is always derived (`principalMinor - SUM(repayments)`); it is never stored.
@@ -20,6 +21,7 @@ import androidx.room.PrimaryKey
         )
     ],
     indices = [
+        Index(value = ["uid"], unique = true),
         Index(value = ["direction", "status"]),
         Index(value = ["contactId"]),
         Index(value = ["dueDate"])
@@ -27,6 +29,7 @@ import androidx.room.PrimaryKey
 )
 data class DebtEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val uid: String = Uids.new(),
     val contactId: Long,
     val direction: DebtDirection,
     val principalMinor: Long,

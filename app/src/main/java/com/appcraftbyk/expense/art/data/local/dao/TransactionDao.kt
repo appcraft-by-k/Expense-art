@@ -60,8 +60,11 @@ interface TransactionDao {
 
     @Query(
         "SELECT t.id, t.kind, t.amountMinor, t.categoryId, c.name AS categoryName, " +
-            "c.iconKey AS categoryIconKey, t.occurredAt, t.paymentMethod, t.note " +
-            "FROM transactions t LEFT JOIN categories c ON c.id = t.categoryId " +
+            "c.iconKey AS categoryIconKey, t.occurredAt, t.paymentMethodId, " +
+            "pm.name AS paymentMethodName, t.note " +
+            "FROM transactions t " +
+            "LEFT JOIN categories c ON c.id = t.categoryId " +
+            "JOIN payment_methods pm ON pm.id = t.paymentMethodId " +
             "WHERE t.kind = :kind AND t.occurredAt >= :from AND t.occurredAt < :to " +
             "AND (:categoryId IS NULL OR t.categoryId = :categoryId) " +
             "ORDER BY t.occurredAt DESC, t.id DESC"
@@ -75,8 +78,11 @@ interface TransactionDao {
 
     @Query(
         "SELECT t.id, t.kind, t.amountMinor, t.categoryId, c.name AS categoryName, " +
-            "c.iconKey AS categoryIconKey, t.occurredAt, t.paymentMethod, t.note " +
-            "FROM transactions t LEFT JOIN categories c ON c.id = t.categoryId " +
+            "c.iconKey AS categoryIconKey, t.occurredAt, t.paymentMethodId, " +
+            "pm.name AS paymentMethodName, t.note " +
+            "FROM transactions t " +
+            "LEFT JOIN categories c ON c.id = t.categoryId " +
+            "JOIN payment_methods pm ON pm.id = t.paymentMethodId " +
             "ORDER BY t.occurredAt DESC, t.id DESC LIMIT :limit"
     )
     fun observeRecent(limit: Int): Flow<List<TransactionWithCategory>>

@@ -4,7 +4,6 @@ import androidx.room.TypeConverter
 import com.appcraftbyk.expense.art.data.local.entity.DebtDirection
 import com.appcraftbyk.expense.art.data.local.entity.DebtListFilter
 import com.appcraftbyk.expense.art.data.local.entity.DebtStatus
-import com.appcraftbyk.expense.art.data.local.entity.PaymentMethod
 import com.appcraftbyk.expense.art.data.local.entity.SavingsEntryKind
 import com.appcraftbyk.expense.art.data.local.entity.TransactionKind
 
@@ -12,9 +11,6 @@ import com.appcraftbyk.expense.art.data.local.entity.TransactionKind
 class Converters {
     @TypeConverter fun transactionKindToString(value: TransactionKind): String = value.name
     @TypeConverter fun stringToTransactionKind(value: String): TransactionKind = TransactionKind.valueOf(value)
-
-    @TypeConverter fun paymentMethodToString(value: PaymentMethod): String = value.name
-    @TypeConverter fun stringToPaymentMethod(value: String): PaymentMethod = PaymentMethod.valueOf(value)
 
     @TypeConverter fun debtDirectionToString(value: DebtDirection): String = value.name
     @TypeConverter fun stringToDebtDirection(value: String): DebtDirection = DebtDirection.valueOf(value)

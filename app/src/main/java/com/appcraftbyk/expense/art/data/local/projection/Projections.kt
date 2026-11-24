@@ -2,7 +2,6 @@ package com.appcraftbyk.expense.art.data.local.projection
 
 import com.appcraftbyk.expense.art.data.local.entity.DebtDirection
 import com.appcraftbyk.expense.art.data.local.entity.DebtStatus
-import com.appcraftbyk.expense.art.data.local.entity.PaymentMethod
 import com.appcraftbyk.expense.art.data.local.entity.TransactionKind
 
 /** Aggregate result POJOs; every figure is computed in SQL, never in memory. */
@@ -27,7 +26,8 @@ data class TransactionWithCategory(
     val categoryName: String?,
     val categoryIconKey: String?,
     val occurredAt: Long,
-    val paymentMethod: PaymentMethod,
+    val paymentMethodId: Long,
+    val paymentMethodName: String,
     val note: String?
 )
 

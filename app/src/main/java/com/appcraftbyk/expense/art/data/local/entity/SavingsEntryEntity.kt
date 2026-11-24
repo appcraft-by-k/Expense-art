@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.appcraftbyk.expense.art.core.id.Uids
 
 /** Pot balance is derived: SUM(contributions) - SUM(withdrawals). Never stored. */
 @Entity(
@@ -16,10 +17,14 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["goalId", "occurredAt"])]
+    indices = [
+        Index(value = ["uid"], unique = true),
+        Index(value = ["goalId", "occurredAt"])
+    ]
 )
 data class SavingsEntryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val uid: String = Uids.new(),
     val goalId: Long,
     val kind: SavingsEntryKind,
     /** Positive minor units (paise). */

@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.appcraftbyk.expense.art.core.id.Uids
 
 /**
  * A savings pot ("HDFC FD 2026", "Emergency Fund"). Target and deadline are optional because
@@ -20,12 +21,14 @@ import androidx.room.PrimaryKey
         )
     ],
     indices = [
+        Index(value = ["uid"], unique = true),
         Index(value = ["typeId"]),
         Index(value = ["isArchived", "sortOrder"])
     ]
 )
 data class SavingsGoalEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val uid: String = Uids.new(),
     val name: String,
     val typeId: Long,
     val institution: String?,

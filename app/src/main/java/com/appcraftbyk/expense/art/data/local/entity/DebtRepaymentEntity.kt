@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.appcraftbyk.expense.art.core.id.Uids
 
 /** Deleting a debt removes its repayment history; debts are never hard-deleted while open. */
 @Entity(
@@ -17,12 +18,14 @@ import androidx.room.PrimaryKey
         )
     ],
     indices = [
+        Index(value = ["uid"], unique = true),
         Index(value = ["debtId", "paidAt"]),
         Index(value = ["paidAt"])
     ]
 )
 data class DebtRepaymentEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val uid: String = Uids.new(),
     val debtId: Long,
     /** Positive minor units (paise). */
     val amountMinor: Long,

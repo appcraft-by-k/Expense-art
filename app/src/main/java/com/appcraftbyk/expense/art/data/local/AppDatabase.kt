@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.appcraftbyk.expense.art.data.local.dao.BudgetDao
 import com.appcraftbyk.expense.art.data.local.dao.CategoryDao
 import com.appcraftbyk.expense.art.data.local.dao.DebtDao
+import com.appcraftbyk.expense.art.data.local.dao.PaymentMethodDao
 import com.appcraftbyk.expense.art.data.local.dao.SavingsDao
 import com.appcraftbyk.expense.art.data.local.dao.TransactionDao
 import com.appcraftbyk.expense.art.data.local.entity.CategoryEntity
@@ -13,6 +14,7 @@ import com.appcraftbyk.expense.art.data.local.entity.DebtContactEntity
 import com.appcraftbyk.expense.art.data.local.entity.DebtEntity
 import com.appcraftbyk.expense.art.data.local.entity.DebtRepaymentEntity
 import com.appcraftbyk.expense.art.data.local.entity.MonthlyBudgetEntity
+import com.appcraftbyk.expense.art.data.local.entity.PaymentMethodEntity
 import com.appcraftbyk.expense.art.data.local.entity.SavingsEntryEntity
 import com.appcraftbyk.expense.art.data.local.entity.SavingsGoalEntity
 import com.appcraftbyk.expense.art.data.local.entity.SavingsTypeEntity
@@ -21,6 +23,9 @@ import com.appcraftbyk.expense.art.data.local.entity.TransactionEntity
 /**
  * Schema version 1. Schema JSON is exported to `app/schemas` and must be committed because the
  * v1 -> v2 reminder migration depends on it.
+ *
+ * Every syncable table carries a stable uid for future cloud backup/merge. Local integer
+ * primary keys stay the storage key; the backup layer maps parent uids to local ids on restore.
  *
  * Never enable destructive migration: user data must survive every schema change.
  */
@@ -34,7 +39,8 @@ import com.appcraftbyk.expense.art.data.local.entity.TransactionEntity
         DebtRepaymentEntity::class,
         SavingsTypeEntity::class,
         SavingsGoalEntity::class,
-        SavingsEntryEntity::class
+        SavingsEntryEntity::class,
+        PaymentMethodEntity::class
     ],
     version = 1,
     exportSchema = true
@@ -47,6 +53,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun budgetDao(): BudgetDao
     abstract fun debtDao(): DebtDao
     abstract fun savingsDao(): SavingsDao
+    abstract fun paymentMethodDao(): PaymentMethodDao
 
     companion object {
         const val NAME = "expense_art.db"

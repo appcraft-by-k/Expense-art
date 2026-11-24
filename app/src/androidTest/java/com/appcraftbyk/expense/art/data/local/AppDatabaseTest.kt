@@ -14,7 +14,6 @@ import com.appcraftbyk.expense.art.data.local.entity.DebtEntity
 import com.appcraftbyk.expense.art.data.local.entity.DebtListFilter
 import com.appcraftbyk.expense.art.data.local.entity.DebtRepaymentEntity
 import com.appcraftbyk.expense.art.data.local.entity.DebtStatus
-import com.appcraftbyk.expense.art.data.local.entity.PaymentMethod
 import com.appcraftbyk.expense.art.data.local.entity.SavingsEntryEntity
 import com.appcraftbyk.expense.art.data.local.entity.SavingsEntryKind
 import com.appcraftbyk.expense.art.data.local.entity.SavingsGoalEntity
@@ -68,11 +67,38 @@ class AppDatabaseTest {
         val types = db.savingsDao().observeTypes(includeArchived = true).first()
         assertEquals(7, types.size)
 
+        val methods = db.paymentMethodDao().observeAll(includeArchived = true).first()
+        assertEquals(5, methods.size)
+        assertTrue(methods.all { it.isSystem })
+
         // Re-running the seeder must not duplicate rows or change fixed IDs.
         DatabaseSeeder.seed(db.openHelper.writableDatabase)
         assertEquals(14, db.categoryDao().observeAll().first().size)
         assertEquals(7, db.savingsDao().observeTypes(includeArchived = true).first().size)
+        assertEquals(5, db.paymentMethodDao().observeAll(includeArchived = true).first().size)
         assertNotNull(db.categoryDao().getById(1))
+    }
+
+    @Test
+    fun seededRows_haveDeterministicUids_forCloudMerge() = runBlocking {
+        // Same uid on every install/device, so system rows merge instead of duplicating.
+        assertEquals("sys-category-expense-food", db.categoryDao().getById(1)!!.uid)
+        assertEquals("sys-category-income-other", db.categoryDao().getById(14)!!.uid)
+        assertEquals("sys-payment-method-upi", db.paymentMethodDao().getById(2)!!.uid)
+        assertEquals("sys-savings-type-bank-fd", db.savingsDao().getType(1)!!.uid)
+    }
+
+    @Test
+    fun uidIsUnique_perTable() = runBlocking {
+        val categoryDao = db.categoryDao()
+        categoryDao.insert(category(name = "Cafe", uid = "duplicate-uid"))
+        var thrown: SQLiteConstraintException? = null
+        try {
+            categoryDao.insert(category(name = "Diner", uid = "duplicate-uid"))
+        } catch (e: SQLiteConstraintException) {
+            thrown = e
+        }
+        assertNotNull("Duplicate uids must be rejected", thrown)
     }
 
     @Test
@@ -116,6 +142,12 @@ class AppDatabaseTest {
         assertEquals(40_000L, spend[0].totalMinor)
         assertEquals(foodId, spend[1].categoryId)
         assertEquals(40_000L, spend[1].totalMinor)
+
+        val ledger = transactionDao
+            .observeRange(TransactionKind.EXPENSE, novemberStart, monthEnd, categoryId = null)
+            .first()
+        assertEquals(3, ledger.size)
+        assertEquals("UPI", ledger.first().paymentMethodName)
     }
 
     @Test
@@ -131,6 +163,28 @@ class AppDatabaseTest {
         }
         assertNotNull("FK RESTRICT must block deleting a category with transactions", thrown)
         assertNotNull(db.categoryDao().getById(1))
+    }
+
+    @Test
+    fun deletingInUsePaymentMethod_isRestricted() = runBlocking {
+        val methodDao = db.paymentMethodDao()
+        val upi = methodDao.getById(2)!!
+        db.transactionDao().insert(
+            transaction(categoryId = 1, amountMinor = 10_000, occurredAt = 1L, paymentMethodId = upi.id)
+        )
+
+        var thrown: SQLiteConstraintException? = null
+        try {
+            methodDao.delete(upi)
+        } catch (e: SQLiteConstraintException) {
+            thrown = e
+        }
+        assertNotNull("FK RESTRICT must block deleting a payment method in use", thrown)
+
+        // Reassigning first makes the delete legal; the repository wraps both in one transaction.
+        methodDao.reassignTransactions(fromPaymentMethodId = upi.id, toPaymentMethodId = 1, updatedAt = 2L)
+        methodDao.delete(upi)
+        assertEquals(0, methodDao.countUsage(upi.id))
     }
 
     @Test
@@ -248,13 +302,14 @@ class AppDatabaseTest {
         categoryId: Long?,
         amountMinor: Long,
         occurredAt: Long,
-        kind: TransactionKind = TransactionKind.EXPENSE
+        kind: TransactionKind = TransactionKind.EXPENSE,
+        paymentMethodId: Long = 2
     ) = TransactionEntity(
         kind = kind,
         amountMinor = amountMinor,
         categoryId = categoryId,
         occurredAt = occurredAt,
-        paymentMethod = PaymentMethod.UPI,
+        paymentMethodId = paymentMethodId,
         note = null,
         createdAt = occurredAt,
         updatedAt = occurredAt
@@ -281,9 +336,11 @@ class AppDatabaseTest {
 
     private fun category(
         name: String,
-        kind: TransactionKind,
-        sortOrder: Int
+        kind: TransactionKind = TransactionKind.EXPENSE,
+        sortOrder: Int = 0,
+        uid: String = com.appcraftbyk.expense.art.core.id.Uids.new()
     ) = CategoryEntity(
+        uid = uid,
         name = name,
         kind = kind,
         iconKey = "other",

@@ -9,6 +9,7 @@ import com.appcraftbyk.expense.art.data.local.DatabaseSeeder
 import com.appcraftbyk.expense.art.data.local.dao.BudgetDao
 import com.appcraftbyk.expense.art.data.local.dao.CategoryDao
 import com.appcraftbyk.expense.art.data.local.dao.DebtDao
+import com.appcraftbyk.expense.art.data.local.dao.PaymentMethodDao
 import com.appcraftbyk.expense.art.data.local.dao.SavingsDao
 import com.appcraftbyk.expense.art.data.local.dao.TransactionDao
 import dagger.Module
@@ -50,4 +51,7 @@ object DatabaseModule {
 
     @Provides
     fun provideSavingsDao(db: AppDatabase): SavingsDao = db.savingsDao()
+
+    @Provides
+    fun providePaymentMethodDao(db: AppDatabase): PaymentMethodDao = db.paymentMethodDao()
 }
