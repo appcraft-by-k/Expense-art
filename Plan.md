@@ -97,6 +97,8 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 
 **Not to be added:** Hilt test artifacts (until Hilt-injected instrumented tests exist), SQLCipher, chart libraries, androidx `security-crypto` (deprecated).
 
+**Resolved in P0 (2026-11-24):** room `2.8.5`, ksp `2.2.10-2.0.2`, hilt `2.60.1`, hiltNavigationCompose `1.4.0`, navigationCompose `2.9.8`, datastore `1.1.7`, lifecycle `2.9.4`. AGP 9 built-in Kotlin needs `android.disallowKotlinSourceSets=false` in `gradle.properties` because KSP still registers generated sources through the legacy `kotlin.sourceSets` DSL.
+
 ---
 
 ## 4. Build configuration changes
@@ -486,8 +488,8 @@ v1→v2 migration, template + occurrence tables, triage screen, WorkManager 09:0
 
 | Phase | Status | Date | Notes |
 |---|---|---|---|
-| P0 Build & DI spike | Not started | — | — |
-| P1 Data layer | Not started | — | — |
+| P0 Build & DI spike | Done | 2026-11-24 | KSP + Hilt + Room on AGP 9 built-in Kotlin; required `android.disallowKotlinSourceSets=false`; validated with real DAOs injected via Hilt instead of a throwaway entity |
+| P1 Data layer | Done | 2026-11-24 | 9 entities, 5 DAOs, seeder (14 categories + 7 savings types), `schemas/…/1.json`; 7 instrumented DAO tests green |
 | P2 DI + domain | Not started | — | — |
 | P3 Settings/theme/shell | Not started | — | — |
 | P4 Home | Not started | — | — |
@@ -501,3 +503,5 @@ v1→v2 migration, template + occurrence tables, triage screen, WorkManager 09:0
 ## 17. Session log
 
 _(append one line per feature session: date — phase — summary — build/test result)_
+
+2026-11-24 — P0+P1 — Room DB setup: KSP/Hilt/minSdk 26 build config, 9 entities + converters, 5 DAOs with SQL aggregates, seeder, schema v1 export, DAO tests — `assembleDebug` OK, `testDebugUnitTest` OK, `connectedDebugAndroidTest` 8/8 pass, app launches without crash.
