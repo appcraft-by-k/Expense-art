@@ -5,6 +5,8 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.appcraftbyk.expense.art.core.id.Uids
+import com.appcraftbyk.expense.art.domain.model.DebtDirection
+import com.appcraftbyk.expense.art.domain.model.DebtStatus
 
 /**
  * Outstanding balance is always derived (`principalMinor - SUM(repayments)`); it is never stored.

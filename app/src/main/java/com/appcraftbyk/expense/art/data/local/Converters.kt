@@ -1,11 +1,11 @@
 package com.appcraftbyk.expense.art.data.local
 
 import androidx.room.TypeConverter
-import com.appcraftbyk.expense.art.data.local.entity.DebtDirection
-import com.appcraftbyk.expense.art.data.local.entity.DebtListFilter
-import com.appcraftbyk.expense.art.data.local.entity.DebtStatus
-import com.appcraftbyk.expense.art.data.local.entity.SavingsEntryKind
-import com.appcraftbyk.expense.art.data.local.entity.TransactionKind
+import com.appcraftbyk.expense.art.domain.model.DebtDirection
+import com.appcraftbyk.expense.art.domain.model.DebtListFilter
+import com.appcraftbyk.expense.art.domain.model.DebtStatus
+import com.appcraftbyk.expense.art.domain.model.SavingsEntryKind
+import com.appcraftbyk.expense.art.domain.model.TransactionKind
 
 /** Enums are persisted as their stable TEXT names, never as ordinals. */
 class Converters {

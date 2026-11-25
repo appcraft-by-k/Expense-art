@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.appcraftbyk.expense.art.data.local.entity.TransactionEntity
-import com.appcraftbyk.expense.art.data.local.entity.TransactionKind
+import com.appcraftbyk.expense.art.domain.model.TransactionKind
 import com.appcraftbyk.expense.art.data.local.projection.CategorySpend
 import com.appcraftbyk.expense.art.data.local.projection.KindTotal
 import com.appcraftbyk.expense.art.data.local.projection.TransactionWithCategory
@@ -59,7 +59,7 @@ interface TransactionDao {
     ): Flow<List<CategorySpend>>
 
     @Query(
-        "SELECT t.id, t.kind, t.amountMinor, t.categoryId, c.name AS categoryName, " +
+        "SELECT t.id, t.uid, t.kind, t.amountMinor, t.categoryId, c.name AS categoryName, " +
             "c.iconKey AS categoryIconKey, t.occurredAt, t.paymentMethodId, " +
             "pm.name AS paymentMethodName, t.note " +
             "FROM transactions t " +
@@ -77,7 +77,7 @@ interface TransactionDao {
     ): Flow<List<TransactionWithCategory>>
 
     @Query(
-        "SELECT t.id, t.kind, t.amountMinor, t.categoryId, c.name AS categoryName, " +
+        "SELECT t.id, t.uid, t.kind, t.amountMinor, t.categoryId, c.name AS categoryName, " +
             "c.iconKey AS categoryIconKey, t.occurredAt, t.paymentMethodId, " +
             "pm.name AS paymentMethodName, t.note " +
             "FROM transactions t " +

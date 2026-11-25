@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.appcraftbyk.expense.art.core.id.Uids
+import com.appcraftbyk.expense.art.domain.model.TransactionKind
 
 /**
  * System categories use fixed IDs 1..N and deterministic [uid]s so their identity survives

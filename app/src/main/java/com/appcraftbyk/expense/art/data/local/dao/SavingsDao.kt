@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.Flow
 interface SavingsDao {
 
     @Query(
-        "SELECT g.id, g.name, g.typeId, t.name AS typeName, g.institution, g.targetMinor, g.deadline, " +
+        "SELECT g.id, g.uid, g.name, g.typeId, t.name AS typeName, g.institution, g.targetMinor, g.deadline, " +
             "COALESCE(SUM(CASE WHEN e.kind = 'CONTRIBUTION' THEN e.amountMinor ELSE -e.amountMinor END), 0) AS balanceMinor, " +
-            "g.isArchived, g.sortOrder " +
+            "g.isArchived, g.sortOrder, g.createdAt " +
             "FROM savings_goals g JOIN savings_types t ON t.id = g.typeId " +
             "LEFT JOIN savings_entries e ON e.goalId = g.id " +
             "WHERE (:includeArchived = 1 OR g.isArchived = 0) " +
@@ -25,17 +25,30 @@ interface SavingsDao {
     fun observePots(includeArchived: Boolean = false): Flow<List<SavingsPotWithBalance>>
 
     @Query(
-        "SELECT g.id, g.name, g.typeId, t.name AS typeName, g.institution, g.targetMinor, g.deadline, " +
+        "SELECT g.id, g.uid, g.name, g.typeId, t.name AS typeName, g.institution, g.targetMinor, g.deadline, " +
             "COALESCE(SUM(CASE WHEN e.kind = 'CONTRIBUTION' THEN e.amountMinor ELSE -e.amountMinor END), 0) AS balanceMinor, " +
-            "g.isArchived, g.sortOrder " +
+            "g.isArchived, g.sortOrder, g.createdAt " +
             "FROM savings_goals g JOIN savings_types t ON t.id = g.typeId " +
             "LEFT JOIN savings_entries e ON e.goalId = g.id " +
             "WHERE g.id = :goalId GROUP BY g.id"
     )
     fun observePot(goalId: Long): Flow<SavingsPotWithBalance?>
 
+    @Query(
+        "SELECT g.id, g.uid, g.name, g.typeId, t.name AS typeName, g.institution, g.targetMinor, g.deadline, " +
+            "COALESCE(SUM(CASE WHEN e.kind = 'CONTRIBUTION' THEN e.amountMinor ELSE -e.amountMinor END), 0) AS balanceMinor, " +
+            "g.isArchived, g.sortOrder, g.createdAt " +
+            "FROM savings_goals g JOIN savings_types t ON t.id = g.typeId " +
+            "LEFT JOIN savings_entries e ON e.goalId = g.id " +
+            "WHERE g.id = :goalId GROUP BY g.id"
+    )
+    suspend fun getPot(goalId: Long): SavingsPotWithBalance?
+
     @Query("SELECT * FROM savings_goals WHERE id = :goalId")
     suspend fun getGoal(goalId: Long): SavingsGoalEntity?
+
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM savings_goals")
+    suspend fun nextGoalSortOrder(): Int
 
     @Query(
         "SELECT COALESCE(SUM(CASE WHEN kind = 'CONTRIBUTION' THEN amountMinor ELSE -amountMinor END), 0) " +
@@ -84,4 +97,10 @@ interface SavingsDao {
 
     @Query("UPDATE savings_goals SET typeId = :toTypeId WHERE typeId = :fromTypeId")
     suspend fun reassignGoals(fromTypeId: Long, toTypeId: Long)
+
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM savings_types")
+    suspend fun nextTypeSortOrder(): Int
+
+    @Query("DELETE FROM savings_types WHERE id = :typeId")
+    suspend fun deleteType(typeId: Long)
 }

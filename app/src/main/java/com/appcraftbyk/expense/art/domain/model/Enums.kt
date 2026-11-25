@@ -1,4 +1,4 @@
-package com.appcraftbyk.expense.art.data.local.entity
+package com.appcraftbyk.expense.art.domain.model
 
 /** Sign of a ledger row is carried by this kind; amounts are always stored positive. */
 enum class TransactionKind { EXPENSE, INCOME }

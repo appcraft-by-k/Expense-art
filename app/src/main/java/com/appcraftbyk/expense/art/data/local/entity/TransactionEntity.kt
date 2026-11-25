@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.appcraftbyk.expense.art.core.id.Uids
+import com.appcraftbyk.expense.art.domain.model.TransactionKind
 
 /**
  * Categories and payment methods may only be deleted when unused; FK RESTRICT protects history.

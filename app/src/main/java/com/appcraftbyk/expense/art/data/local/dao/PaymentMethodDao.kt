@@ -46,4 +46,10 @@ interface PaymentMethodDao {
         toPaymentMethodId: Long,
         updatedAt: Long
     )
+
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM payment_methods")
+    suspend fun nextSortOrder(): Int
+
+    @Query("DELETE FROM payment_methods WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }

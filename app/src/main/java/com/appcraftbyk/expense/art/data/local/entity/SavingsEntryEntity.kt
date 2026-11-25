@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.appcraftbyk.expense.art.core.id.Uids
+import com.appcraftbyk.expense.art.domain.model.SavingsEntryKind
 
 /** Pot balance is derived: SUM(contributions) - SUM(withdrawals). Never stored. */
 @Entity(

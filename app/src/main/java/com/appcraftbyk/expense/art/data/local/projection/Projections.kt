@@ -1,8 +1,8 @@
 package com.appcraftbyk.expense.art.data.local.projection
 
-import com.appcraftbyk.expense.art.data.local.entity.DebtDirection
-import com.appcraftbyk.expense.art.data.local.entity.DebtStatus
-import com.appcraftbyk.expense.art.data.local.entity.TransactionKind
+import com.appcraftbyk.expense.art.domain.model.DebtDirection
+import com.appcraftbyk.expense.art.domain.model.DebtStatus
+import com.appcraftbyk.expense.art.domain.model.TransactionKind
 
 /** Aggregate result POJOs; every figure is computed in SQL, never in memory. */
 
@@ -20,6 +20,7 @@ data class CategorySpend(
 
 data class TransactionWithCategory(
     val id: Long,
+    val uid: String,
     val kind: TransactionKind,
     val amountMinor: Long,
     val categoryId: Long?,
@@ -64,6 +65,7 @@ data class UpcomingDue(
 
 data class SavingsPotWithBalance(
     val id: Long,
+    val uid: String,
     val name: String,
     val typeId: Long,
     val typeName: String,
@@ -72,5 +74,6 @@ data class SavingsPotWithBalance(
     val deadline: Long?,
     val balanceMinor: Long,
     val isArchived: Boolean,
-    val sortOrder: Int
+    val sortOrder: Int,
+    val createdAt: Long
 )

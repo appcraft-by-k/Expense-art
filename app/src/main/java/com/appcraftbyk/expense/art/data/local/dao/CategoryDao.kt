@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.appcraftbyk.expense.art.data.local.entity.CategoryEntity
-import com.appcraftbyk.expense.art.data.local.entity.TransactionKind
+import com.appcraftbyk.expense.art.domain.model.TransactionKind
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -52,4 +52,10 @@ interface CategoryDao {
 
     @Query("UPDATE categories SET sortOrder = :sortOrder WHERE id = :id")
     suspend fun updateSortOrder(id: Long, sortOrder: Int)
+
+    @Query("SELECT COALESCE(MAX(sortOrder), -1) + 1 FROM categories WHERE kind = :kind")
+    suspend fun nextSortOrder(kind: TransactionKind): Int
+
+    @Query("DELETE FROM categories WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }

@@ -6,9 +6,9 @@ import androidx.room.Query
 import androidx.room.Update
 import com.appcraftbyk.expense.art.data.local.entity.DebtContactEntity
 import com.appcraftbyk.expense.art.data.local.entity.DebtEntity
-import com.appcraftbyk.expense.art.data.local.entity.DebtListFilter
+import com.appcraftbyk.expense.art.domain.model.DebtListFilter
 import com.appcraftbyk.expense.art.data.local.entity.DebtRepaymentEntity
-import com.appcraftbyk.expense.art.data.local.entity.DebtStatus
+import com.appcraftbyk.expense.art.domain.model.DebtStatus
 import com.appcraftbyk.expense.art.data.local.projection.DebtWithContact
 import com.appcraftbyk.expense.art.data.local.projection.DirectionOutstanding
 import com.appcraftbyk.expense.art.data.local.projection.UpcomingDue

@@ -3,7 +3,7 @@
 **Project:** `com.appcraftbyk.expense.art` (`C:\Users\kanis\AndroidStudioProjects\Expenseart`)
 **Source docs:** `PRD.md` (v1.0) + `AGENTS.md`
 **Plan version:** 2.0 — locked after design review
-**Status:** Approved for implementation. No phase started yet.
+**Status:** P0–P2 done (2026-11-25). Next: P3 Settings/theme/shell.
 
 ---
 
@@ -449,9 +449,9 @@ data class HomeUiState(
 **Verification:** `.\gradlew :app:connectedDebugAndroidTest` (or unit-level DAO test with in-memory DB if no device).
 
 ### P2 — DI + domain
-- [ ] Hilt modules (§9); repository interfaces + impls; mappers.
-- [ ] Use cases: `AddTransaction`, `ObserveHomeSummary`, `ObserveLedger`, `SaveCategory`/`DeleteCategory`(reassign), `RecordRepayment`, `SettleDebt`, `SaveSavingsPot`, `ContributeToPot`, `SaveSavingsType`/`DeleteSavingsType`, `SetBudget`.
-- [ ] Unit tests with fake repositories: over-payment rejection, settle transition, withdrawal-below-zero rejection, category reassign.
+- [x] Hilt modules (§9); repository interfaces + impls; mappers.
+- [x] Use cases: `AddTransaction`, `ObserveHomeSummary`, `ObserveLedger`, `SaveCategory`/`DeleteCategory`(reassign), `RecordRepayment`, `SettleDebt`, `SaveSavingsPot`, `ContributeToPot`, `SaveSavingsType`/`DeleteSavingsType`, `SetBudget`.
+- [x] Unit tests with fake repositories: over-payment rejection, settle transition, withdrawal-below-zero rejection, category reassign.
 
 **Acceptance:** all listed invariants (§7) covered by tests; `assembleDebug` green.
 
@@ -522,7 +522,7 @@ v1→v2 migration, template + occurrence tables, triage screen, WorkManager 09:0
 |---|---|---|---|
 | P0 Build & DI spike | Done | 2026-11-24 | KSP + Hilt + Room on AGP 9 built-in Kotlin; required `android.disallowKotlinSourceSets=false`; validated with real DAOs injected via Hilt instead of a throwaway entity |
 | P1 Data layer | Done | 2026-11-24 | Revised pre-release: 10 tables incl. `payment_methods` + `uid` on every table; 6 DAOs, seeder (14 categories + 7 types + 5 payment methods), `schemas/…/1.json`; 10 instrumented DAO tests green |
-| P2 DI + domain | Not started | — | — |
+| P2 DI + domain | Done | 2026-11-25 | Enums moved to `domain/model`; 6 repository interfaces + Room impls + mappers; `TransactionRunner` for atomic invariants; 14 use cases (incl. `SavePaymentMethod`/`DeletePaymentMethod` for invariant 11); `AppClock`/`DateRanges`/budget keys; DataStore/Keystore/formatter intentionally left to P3; 60 JVM unit tests |
 | P3 Settings/theme/shell | Not started | — | — |
 | P4 Home | Not started | — | — |
 | P5 Ledger + categories | Not started | — | — |
@@ -538,3 +538,4 @@ _(append one line per feature session: date — phase — summary — build/test
 
 2026-11-24 — P0+P1 — Room DB setup: KSP/Hilt/minSdk 26 build config, 9 entities + converters, 5 DAOs with SQL aggregates, seeder, schema v1 export, DAO tests — `assembleDebug` OK, `testDebugUnitTest` OK, `connectedDebugAndroidTest` 8/8 pass, app launches without crash.
 2026-11-24 — P1 revision (pre-release) — Added stable `uid` to all tables (deterministic system uids), replaced `PaymentMethod` enum with `payment_methods` table + FK, reviewed schema for cloud backup (§8.4), regenerated schema v1 — `assembleDebug` OK, `connectedDebugAndroidTest` 11/11 pass, app launches.
+2026-11-25 — P2 — DI + domain: enums relocated to `domain/model`; 6 repository interfaces, Room impls, mappers, `RepositoryModule`/`DataModule`; `TransactionRunner` + 14 use cases covering §7 invariants 1, 3, 5, 6, 7, 8, 9, 11, 12; `AppClock`/`DateRanges`/budget keys; fakes + 60 JVM tests; schema v1 unchanged (no DB migration). DataStore/Keystore/currency formatter deferred to P3 per §13 — `assembleDebug` OK, `testDebugUnitTest` 60/60, `connectedDebugAndroidTest` 11/11, app launches.
