@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Expense art</string>
+
+    <string name="tab_home">Home</string>
+    <string name="tab_expenses">Expenses</string>
+    <string name="tab_debt_goals">Debt &amp; Goals</string>
+    <string name="tab_reminders">Reminders</string>
+
+    <string name="empty_tab_message">Nothing here yet</string>
 </resources>
