@@ -63,6 +63,9 @@ data class LedgerQuery(
 
 class FakeTransactionRepository : TransactionRepository {
     var totals: Map<TransactionKind, Long> = emptyMap()
+
+    /** Optional per-range totals, keyed by `fromMillis`; falls back to [totals]. */
+    var totalsByFromMillis: Map<Long, Map<TransactionKind, Long>> = emptyMap()
     var spendByCategory: List<CategorySpendItem> = emptyList()
     var recent: List<Transaction> = emptyList()
     var ledger: List<Transaction> = emptyList()
@@ -72,7 +75,8 @@ class FakeTransactionRepository : TransactionRepository {
     override fun observeTotalsByKind(
         fromMillis: Long,
         toMillisExclusive: Long
-    ): Flow<Map<TransactionKind, Long>> = flowOf(totals)
+    ): Flow<Map<TransactionKind, Long>> =
+        flowOf(totalsByFromMillis[fromMillis] ?: totals)
 
     override fun observeTotalByKind(
         kind: TransactionKind,

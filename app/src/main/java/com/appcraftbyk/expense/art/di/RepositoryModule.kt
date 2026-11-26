@@ -1,5 +1,7 @@
 package com.appcraftbyk.expense.art.di
 
+import com.appcraftbyk.expense.art.data.prefs.PreferencesRepository
+import com.appcraftbyk.expense.art.data.prefs.PreferencesRepositoryImpl
 import com.appcraftbyk.expense.art.data.repository.BudgetRepositoryImpl
 import com.appcraftbyk.expense.art.data.repository.CategoryRepositoryImpl
 import com.appcraftbyk.expense.art.data.repository.DebtRepositoryImpl
@@ -53,4 +55,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindTransactionRunner(impl: RoomTransactionRunner): TransactionRunner
+
+    @Binds
+    @Singleton
+    abstract fun bindPreferencesRepository(
+        impl: PreferencesRepositoryImpl
+    ): PreferencesRepository
 }

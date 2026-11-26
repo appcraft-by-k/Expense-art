@@ -29,6 +29,7 @@ class ObserveHomeSummary @Inject constructor(
 
     operator fun invoke(yearMonth: YearMonth): Flow<HomeSummary> {
         val range = dateRanges.month(yearMonth)
+        val previousRange = dateRanges.month(yearMonth.minusMonths(1))
         val today = appClock.todayEpochDay()
 
         val money = combine(
@@ -51,6 +52,10 @@ class ObserveHomeSummary @Inject constructor(
 
         return combine(
             money,
+            transactions.observeTotalsByKind(
+                previousRange.fromMillis,
+                previousRange.toMillisExclusive
+            ),
             transactions.observeSpendByCategory(
                 TransactionKind.EXPENSE,
                 range.fromMillis,
@@ -59,11 +64,12 @@ class ObserveHomeSummary @Inject constructor(
             ),
             debts.observeUpcomingDue(today, today + UPCOMING_DUE_WINDOW_DAYS),
             transactions.observeRecent(RECENT_LIMIT)
-        ) { snapshot, topCategories, upcomingDues, recent ->
+        ) { snapshot, previousTotals, topCategories, upcomingDues, recent ->
             HomeSummary(
                 period = yearMonth,
                 incomeMinor = snapshot.incomeMinor,
                 expenseMinor = snapshot.expenseMinor,
+                previousIncomeMinor = previousTotals[TransactionKind.INCOME] ?: 0L,
                 oweMinor = snapshot.oweMinor,
                 owedToMeMinor = snapshot.owedToMeMinor,
                 totalSavingsMinor = snapshot.totalSavingsMinor,

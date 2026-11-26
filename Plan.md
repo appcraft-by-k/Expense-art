@@ -3,7 +3,7 @@
 **Project:** `com.appcraftbyk.expense.art` (`C:\Users\kanis\AndroidStudioProjects\Expenseart`)
 **Source docs:** `PRD.md` (v1.0) + `AGENTS.md`
 **Plan version:** 2.0 — locked after design review
-**Status:** P0–P2 done (2026-11-25). Next: P3 Settings/theme/shell.
+**Status:** P0–P3 done (2026-11-25). Next: P4 Home dashboard.
 
 ---
 
@@ -101,6 +101,8 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 
 **Resolved in P0 (2026-11-24):** room `2.8.5`, ksp `2.2.10-2.0.2`, hilt `2.60.1`, hiltNavigationCompose `1.4.0`, navigationCompose `2.9.8`, datastore `1.1.7`, lifecycle `2.9.4`. AGP 9 built-in Kotlin needs `android.disallowKotlinSourceSets=false` in `gradle.properties` because KSP still registers generated sources through the legacy `kotlin.sourceSets` DSL.
 
+**Updated in P3 (2026-11-25):** `androidx.test.ext:junit` `1.3.0` and `espresso-core` `3.7.0` (was `1.1.5` / `3.5.1`). Espresso 3.5.1 crashes on Android 17 when Compose tests drive the Espresso idling resource (`InputManager.getInstance` was removed).
+
 ---
 
 ## 4. Build configuration changes
@@ -166,6 +168,8 @@ com.appcraftbyk.expense.art
    ├─ App.kt  navigation/Destinations.kt  navigation/ExpenseArtNavHost.kt
    ├─ main/MainViewModel.kt             app-scoped: period, prefs, FAB sheet
    ├─ home/  expenses/  categories/  debt/  savings/  addentry/
+   ├─ settings/SettingsScreen.kt  SettingsViewModel.kt   theme + profile name
+   ├─ common/PlaceholderScreen.kt  LoadStatus.kt
    ├─ reminders/RemindersPlaceholderScreen.kt   (v2 stub)
    └─ theme/Color.kt (PRD tokens) Type.kt Theme.kt (dynamicColor = false)
 ```
@@ -456,12 +460,15 @@ data class HomeUiState(
 **Acceptance:** all listed invariants (§7) covered by tests; `assembleDebug` green.
 
 ### P3 — Settings, theme, app shell
-- [ ] DataStore + Keystore implementation; `UserPreferences` flow; profile name editable.
-- [ ] PRD color tokens in `Color.kt`; `Theme.kt` **`dynamicColor = false`**; light/dark + AMOLED canvas per PRD §5.1.
-- [ ] `IndianCurrencyFormatter` (₹1,25,000) with unit tests.
-- [ ] Scaffold: 4-destination bottom bar, center FAB, `NavHost`, placeholder screens (including Reminders "coming soon").
+- [x] DataStore + Keystore implementation; `UserPreferences` flow; profile name editable.
+- [x] PRD color tokens in `Color.kt`; `Theme.kt` **`dynamicColor = false`**; light/dark + AMOLED canvas per PRD §5.1.
+- [x] `IndianCurrencyFormatter` (₹1,25,000) with unit tests.
+- [x] Scaffold: 4-destination bottom bar, center FAB, `NavHost`, placeholder screens (including Reminders "coming soon").
+
+Settings is a detail route (`settings`) opened from Home's gear icon, not a fifth bottom tab; it hides the bottom bar/FAB. Profile name is stored encrypted in DataStore (`profile_name_encrypted`); theme/month are plaintext.
 
 **Acceptance:** theme/name persist across restart; tabs switch with preserved state; no dynamic-color override.
+**Verified:** `ShellNavigationTest` switches tabs, checks the Reminders FAB is hidden, then changes theme/name, recreates the activity and asserts both restore from DataStore; a manual force-stop/relaunch confirmed the same. Per-tab state preservation is configured (`saveState`/`restoreState`); stateful tab screens arrive in P4–P6.
 
 ### P4 — Home dashboard
 - [ ] Aggregates + `HomeUiState` + `HomeViewModel`; 2×2 metric matrix, budget bar + editor sheet, top-spend tags, upcoming-dues card, activity feed.
@@ -497,7 +504,7 @@ v1→v2 migration, template + occurrence tables, triage screen, WorkManager 09:0
 - **Unit (JVM):** use cases with fake repositories, `IndianCurrencyFormatter`, `DateRanges` (month boundaries, Today/Yesterday across DST/timezones).
 - **Instrumented:** DAO queries (aggregates, JOINs, FK RESTRICT/CASCADE), seeding idempotence, in-memory `Room.inMemoryDatabaseBuilder`.
 - **Migration:** `MigrationTestHelper` from v2 onward (queue it with P8).
-- **UI:** Compose tests only for critical flows (add entry, repayment) once screens stabilize.
+- **UI:** Compose tests only for critical flows (add entry, repayment) once screens stabilize. `ShellNavigationTest` covers shell navigation and settings persistence.
 - No Hilt test runner until needed.
 
 ---
@@ -523,7 +530,7 @@ v1→v2 migration, template + occurrence tables, triage screen, WorkManager 09:0
 | P0 Build & DI spike | Done | 2026-11-24 | KSP + Hilt + Room on AGP 9 built-in Kotlin; required `android.disallowKotlinSourceSets=false`; validated with real DAOs injected via Hilt instead of a throwaway entity |
 | P1 Data layer | Done | 2026-11-24 | Revised pre-release: 10 tables incl. `payment_methods` + `uid` on every table; 6 DAOs, seeder (14 categories + 7 types + 5 payment methods), `schemas/…/1.json`; 10 instrumented DAO tests green |
 | P2 DI + domain | Done | 2026-11-25 | Enums moved to `domain/model`; 6 repository interfaces + Room impls + mappers; `TransactionRunner` for atomic invariants; 14 use cases (incl. `SavePaymentMethod`/`DeletePaymentMethod` for invariant 11); `AppClock`/`DateRanges`/budget keys; DataStore/Keystore/formatter intentionally left to P3; 60 JVM unit tests |
-| P3 Settings/theme/shell | Not started | — | — |
+| P3 Settings/theme/shell | Done | 2026-11-25 | DataStore `user_prefs` + `KeystoreCipher` AES-256/GCM for profile name (verified absent from disk plaintext); `UserPreferences` flow; Settings detail route (theme + name); `IndianCurrencyFormatter` (5 JVM tests); 4-tab shell + center brand FAB + per-tab back stacks; brand-colored FAB/active tab; `LoadStatus`; EncryptedValueStore + ShellNavigation instrumented tests |
 | P4 Home | Not started | — | — |
 | P5 Ledger + categories | Not started | — | — |
 | P6 Debt & Savings | Not started | — | — |
@@ -539,3 +546,4 @@ _(append one line per feature session: date — phase — summary — build/test
 2026-11-24 — P0+P1 — Room DB setup: KSP/Hilt/minSdk 26 build config, 9 entities + converters, 5 DAOs with SQL aggregates, seeder, schema v1 export, DAO tests — `assembleDebug` OK, `testDebugUnitTest` OK, `connectedDebugAndroidTest` 8/8 pass, app launches without crash.
 2026-11-24 — P1 revision (pre-release) — Added stable `uid` to all tables (deterministic system uids), replaced `PaymentMethod` enum with `payment_methods` table + FK, reviewed schema for cloud backup (§8.4), regenerated schema v1 — `assembleDebug` OK, `connectedDebugAndroidTest` 11/11 pass, app launches.
 2026-11-25 — P2 — DI + domain: enums relocated to `domain/model`; 6 repository interfaces, Room impls, mappers, `RepositoryModule`/`DataModule`; `TransactionRunner` + 14 use cases covering §7 invariants 1, 3, 5, 6, 7, 8, 9, 11, 12; `AppClock`/`DateRanges`/budget keys; fakes + 60 JVM tests; schema v1 unchanged (no DB migration). DataStore/Keystore/currency formatter deferred to P3 per §13 — `assembleDebug` OK, `testDebugUnitTest` 60/60, `connectedDebugAndroidTest` 11/11, app launches.
+2026-11-25 — P3 — Settings/theme/shell: `user_prefs` DataStore + `EncryptedValueStore`/`KeystoreCipher` (AES-256/GCM, key `expense_art_pii`, fails closed and clears unreadable values), `UserPreferences` flow, Settings route (System/Light/Dark + 40-char profile name), `IndianCurrencyFormatter`, 4-tab `NavHost` with per-tab back stacks, center brand FAB with per-tab presets (hidden on Reminders), `LoadStatus`, placeholder screens, edge-to-edge system-bar contrast follows app theme; test deps bumped (espresso 3.7.0, test-ext-junit 1.3.0) for Android 17 — `assembleDebug` OK, `testDebugUnitTest` 65/65, `connectedDebugAndroidTest` 15/15, manual force-stop/relaunch confirmed theme+name persist and name is not plaintext on disk.

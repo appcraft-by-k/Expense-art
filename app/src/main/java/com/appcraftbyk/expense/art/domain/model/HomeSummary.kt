@@ -7,6 +7,8 @@ data class HomeSummary(
     val period: YearMonth,
     val incomeMinor: Long,
     val expenseMinor: Long,
+    /** Income of the month before [period]; drives the "vs last month" delta. */
+    val previousIncomeMinor: Long,
     /** Never netted against [owedToMeMinor]. */
     val oweMinor: Long,
     val owedToMeMinor: Long,

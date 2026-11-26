@@ -51,6 +51,10 @@ class ObserveHomeSummaryTest {
             TransactionKind.INCOME to 100_000,
             TransactionKind.EXPENSE to 40_000
         )
+        transactions.totalsByFromMillis = mapOf(
+            DateRanges(clock).month(november.minusMonths(1)).fromMillis to
+                mapOf(TransactionKind.INCOME to 80_000)
+        )
         transactions.spendByCategory = listOf(
             CategorySpendItem(1, "Food & Dining", "food", 25_000),
             CategorySpendItem(2, "Transport", "transport", 15_000)
@@ -90,6 +94,7 @@ class ObserveHomeSummaryTest {
         assertEquals(november, summary.period)
         assertEquals(100_000L, summary.incomeMinor)
         assertEquals(40_000L, summary.expenseMinor)
+        assertEquals(80_000L, summary.previousIncomeMinor)
         assertEquals(4_000L, summary.oweMinor)
         assertEquals(3_000L, summary.owedToMeMinor)
         assertEquals(7_500L, summary.totalSavingsMinor)
