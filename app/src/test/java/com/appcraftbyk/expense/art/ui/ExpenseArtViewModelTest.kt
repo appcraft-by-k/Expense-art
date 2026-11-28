@@ -3,18 +3,16 @@ package com.appcraftbyk.expense.art.ui
 import androidx.lifecycle.SavedStateHandle
 import com.appcraftbyk.expense.art.ui.navigation.AppTab
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ExpenseArtViewModelTest {
 
     @Test
-    fun `starts on home with quick add hidden`() {
+    fun `starts on home with no sheet`() {
         val viewModel = ExpenseArtViewModel(SavedStateHandle())
 
         assertEquals(AppTab.Home, viewModel.uiState.value.selectedTab)
-        assertFalse(viewModel.uiState.value.isQuickAddMenuVisible)
+        assertEquals(AppSheet.None, viewModel.uiState.value.sheet)
     }
 
     @Test
@@ -29,14 +27,14 @@ class ExpenseArtViewModelTest {
     }
 
     @Test
-    fun `quick add menu opens and dismisses`() {
+    fun `add click opens the entry sheet and dismiss closes it`() {
         val viewModel = ExpenseArtViewModel(SavedStateHandle())
 
         viewModel.onAddClick()
-        assertTrue(viewModel.uiState.value.isQuickAddMenuVisible)
+        assertEquals(AppSheet.AddEntry, viewModel.uiState.value.sheet)
 
-        viewModel.onQuickAddDismissed()
-        assertFalse(viewModel.uiState.value.isQuickAddMenuVisible)
+        viewModel.onSheetDismissed()
+        assertEquals(AppSheet.None, viewModel.uiState.value.sheet)
     }
 
     @Test

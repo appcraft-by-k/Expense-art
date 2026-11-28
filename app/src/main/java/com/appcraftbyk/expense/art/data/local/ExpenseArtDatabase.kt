@@ -26,10 +26,17 @@ abstract class ExpenseArtDatabase : RoomDatabase() {
     companion object {
         const val NAME = "expense_art.db"
 
-        /** Seeds the built-in catalog when the database is created for the first time. */
+        /**
+         * Seeds the built-in catalog. Seeding also runs on open because a destructive
+         * migration recreates the tables without calling onCreate.
+         */
         fun createCallback(): Callback = object : Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 seedDefaultCatalog(db)
+            }
+
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                seedDefaultCatalogIfEmpty(db)
             }
         }
     }

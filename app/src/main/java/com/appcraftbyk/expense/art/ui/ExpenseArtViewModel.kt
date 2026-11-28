@@ -8,10 +8,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
+/** Which sheet, if any, is currently presented over the app shell. */
+sealed interface AppSheet {
+    data object None : AppSheet
+    data object AddEntry : AppSheet
+}
+
 /** Immutable state rendered by the app shell. */
 data class ExpenseArtUiState(
     val selectedTab: AppTab = AppTab.Home,
-    val isQuickAddMenuVisible: Boolean = false
+    val sheet: AppSheet = AppSheet.None
 )
 
 /** Owns the app shell state so it survives configuration changes. */
@@ -32,11 +38,11 @@ class ExpenseArtViewModel(
     }
 
     fun onAddClick() {
-        _uiState.update { it.copy(isQuickAddMenuVisible = true) }
+        _uiState.update { it.copy(sheet = AppSheet.AddEntry) }
     }
 
-    fun onQuickAddDismissed() {
-        _uiState.update { it.copy(isQuickAddMenuVisible = false) }
+    fun onSheetDismissed() {
+        _uiState.update { it.copy(sheet = AppSheet.None) }
     }
 
     private fun String?.toAppTab(): AppTab =
