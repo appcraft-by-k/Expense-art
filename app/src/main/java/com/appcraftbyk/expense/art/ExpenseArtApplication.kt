@@ -2,6 +2,8 @@ package com.appcraftbyk.expense.art
 
 import android.app.Application
 import androidx.room.Room
+import com.appcraftbyk.expense.art.data.CategoryRepository
+import com.appcraftbyk.expense.art.data.PaymentMethodRepository
 import com.appcraftbyk.expense.art.data.TransactionRepository
 import com.appcraftbyk.expense.art.data.local.ExpenseArtDatabase
 
@@ -16,10 +18,22 @@ class ExpenseArtApplication : Application() {
             applicationContext,
             ExpenseArtDatabase::class.java,
             ExpenseArtDatabase.NAME
-        ).build()
+        )
+            // Development-only: recreate the database instead of migrating old schemas.
+            .fallbackToDestructiveMigration(dropAllTables = true)
+            .addCallback(ExpenseArtDatabase.createCallback())
+            .build()
     }
 
     val transactionRepository: TransactionRepository by lazy {
         TransactionRepository(database.transactionDao())
+    }
+
+    val categoryRepository: CategoryRepository by lazy {
+        CategoryRepository(database.categoryDao())
+    }
+
+    val paymentMethodRepository: PaymentMethodRepository by lazy {
+        PaymentMethodRepository(database.paymentMethodDao())
     }
 }

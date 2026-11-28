@@ -2,6 +2,7 @@ package com.appcraftbyk.expense.art.data.local
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
@@ -14,7 +15,23 @@ import androidx.room.PrimaryKey
     tableName = "transactions",
     indices = [
         Index(value = ["occurred_at"]),
-        Index(value = ["type"])
+        Index(value = ["type"]),
+        Index(value = ["category_id"]),
+        Index(value = ["payment_method_id"])
+    ],
+    foreignKeys = [
+        ForeignKey(
+            entity = CategoryEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["category_id"],
+            onDelete = ForeignKey.RESTRICT
+        ),
+        ForeignKey(
+            entity = PaymentMethodEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["payment_method_id"],
+            onDelete = ForeignKey.SET_NULL
+        )
     ]
 )
 data class TransactionEntity(
@@ -29,15 +46,15 @@ data class TransactionEntity(
     @ColumnInfo(name = "amount_minor")
     val amountMinor: Long,
 
-    @ColumnInfo(name = "category")
-    val category: String,
+    @ColumnInfo(name = "category_id")
+    val categoryId: Long,
 
     @ColumnInfo(name = "note")
     val note: String? = null,
 
-    /** Free-form label such as UPI, Cash, Bank, or Card. */
-    @ColumnInfo(name = "payment_method")
-    val paymentMethod: String? = null,
+    /** Null when the user has not recorded how the money moved. */
+    @ColumnInfo(name = "payment_method_id")
+    val paymentMethodId: Long? = null,
 
     /** When the money moved, epoch milliseconds. */
     @ColumnInfo(name = "occurred_at")

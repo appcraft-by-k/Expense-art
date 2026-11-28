@@ -26,23 +26,22 @@ class TransactionRepository(
 
     suspend fun addExpense(
         amountMinor: Long,
-        category: String,
+        categoryId: Long,
         occurredAt: Long = now(),
         note: String? = null,
-        paymentMethod: String? = null
-    ): Long = add(TransactionType.EXPENSE, amountMinor, category, occurredAt, note, paymentMethod)
+        paymentMethodId: Long? = null
+    ): Long = add(TransactionType.EXPENSE, amountMinor, categoryId, occurredAt, note, paymentMethodId)
 
     suspend fun addIncome(
         amountMinor: Long,
-        category: String,
+        categoryId: Long,
         occurredAt: Long = now(),
         note: String? = null,
-        paymentMethod: String? = null
-    ): Long = add(TransactionType.INCOME, amountMinor, category, occurredAt, note, paymentMethod)
+        paymentMethodId: Long? = null
+    ): Long = add(TransactionType.INCOME, amountMinor, categoryId, occurredAt, note, paymentMethodId)
 
     suspend fun update(transaction: TransactionEntity) {
-        require(transaction.amountMinor > 0) { "Amount must be greater than zero" }
-        require(transaction.category.isNotBlank()) { "Category must not be blank" }
+        requireValid(transaction.amountMinor, transaction.categoryId, transaction.paymentMethodId)
         transactionDao.update(transaction)
     }
 
@@ -51,25 +50,31 @@ class TransactionRepository(
     private suspend fun add(
         type: TransactionType,
         amountMinor: Long,
-        category: String,
+        categoryId: Long,
         occurredAt: Long,
         note: String?,
-        paymentMethod: String?
+        paymentMethodId: Long?
     ): Long {
-        require(amountMinor > 0) { "Amount must be greater than zero" }
-        val trimmedCategory = category.trim()
-        require(trimmedCategory.isNotEmpty()) { "Category must not be blank" }
+        requireValid(amountMinor, categoryId, paymentMethodId)
 
         return transactionDao.insert(
             TransactionEntity(
                 type = type,
                 amountMinor = amountMinor,
-                category = trimmedCategory,
+                categoryId = categoryId,
                 note = note?.trim()?.takeIf { it.isNotEmpty() },
-                paymentMethod = paymentMethod?.trim()?.takeIf { it.isNotEmpty() },
+                paymentMethodId = paymentMethodId,
                 occurredAt = occurredAt,
                 createdAt = now()
             )
         )
+    }
+
+    private fun requireValid(amountMinor: Long, categoryId: Long, paymentMethodId: Long?) {
+        require(amountMinor > 0) { "Amount must be greater than zero" }
+        require(categoryId > 0) { "A category is required" }
+        require(paymentMethodId == null || paymentMethodId > 0) {
+            "Payment method id must be positive"
+        }
     }
 }

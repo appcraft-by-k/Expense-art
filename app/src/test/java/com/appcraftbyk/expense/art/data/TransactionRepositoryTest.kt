@@ -20,18 +20,18 @@ class TransactionRepositoryTest {
     fun addExpense_storesExpenseEntry() = runBlocking {
         val id = repository.addExpense(
             amountMinor = 184_050,
-            category = "  Groceries  ",
+            categoryId = 7L,
             occurredAt = fixedNow - 1_000,
             note = "  ",
-            paymentMethod = "UPI"
+            paymentMethodId = 3L
         )
 
         val saved = dao.inserted.single()
         assertEquals(id, saved.id)
         assertEquals(TransactionType.EXPENSE, saved.type)
         assertEquals(184_050L, saved.amountMinor)
-        assertEquals("Groceries", saved.category)
-        assertEquals("UPI", saved.paymentMethod)
+        assertEquals(7L, saved.categoryId)
+        assertEquals(3L, saved.paymentMethodId)
         assertEquals(null, saved.note)
         assertEquals(fixedNow - 1_000, saved.occurredAt)
         assertEquals(fixedNow, saved.createdAt)
@@ -39,25 +39,39 @@ class TransactionRepositoryTest {
 
     @Test
     fun addIncome_storesIncomeEntry() = runBlocking {
-        repository.addIncome(amountMinor = 2_500_000, category = "Freelance")
+        repository.addIncome(amountMinor = 2_500_000, categoryId = 12L)
 
         val saved = dao.inserted.single()
         assertEquals(TransactionType.INCOME, saved.type)
         assertEquals(2_500_000L, saved.amountMinor)
+        assertEquals(12L, saved.categoryId)
         assertEquals(fixedNow, saved.occurredAt)
     }
 
     @Test
     fun addExpense_rejectsNonPositiveAmount() {
         assertThrows(IllegalArgumentException::class.java) {
-            runBlocking { repository.addExpense(amountMinor = 0, category = "Food") }
+            runBlocking { repository.addExpense(amountMinor = 0, categoryId = 1L) }
         }
     }
 
     @Test
-    fun addIncome_rejectsBlankCategory() {
+    fun addIncome_rejectsMissingCategory() {
         assertThrows(IllegalArgumentException::class.java) {
-            runBlocking { repository.addIncome(amountMinor = 100, category = "   ") }
+            runBlocking { repository.addIncome(amountMinor = 100, categoryId = 0) }
+        }
+    }
+
+    @Test
+    fun addExpense_rejectsInvalidPaymentMethod() {
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking {
+                repository.addExpense(
+                    amountMinor = 100,
+                    categoryId = 1L,
+                    paymentMethodId = 0
+                )
+            }
         }
     }
 
