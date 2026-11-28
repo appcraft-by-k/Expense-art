@@ -7,4 +7,12 @@
     <string name="tab_reminders">Reminders</string>
 
     <string name="empty_tab_message">Nothing here yet</string>
+    <string name="add_transaction">Add transaction</string>
+
+    <string name="quick_add_title">Add new</string>
+    <string name="quick_add_subtitle">What would you like to add?</string>
+    <string name="quick_add_expense">Expense</string>
+    <string name="quick_add_income">Income</string>
+    <string name="quick_add_goal">Debt or goal</string>
+    <string name="quick_add_reminder">Reminder</string>
 </resources>
